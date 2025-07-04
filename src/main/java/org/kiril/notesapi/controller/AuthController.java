@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URI;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -23,7 +25,9 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDto> register(@Valid @RequestBody RegisterRequestDto registerRequest) {
-        return ResponseEntity.ok(authService.register(registerRequest));
+        return ResponseEntity.created(URI.create("/api/auth/register"))
+                .body(authService.register(registerRequest));
+
     }
 
     @PostMapping("/login")
@@ -34,7 +38,7 @@ public class AuthController {
     @PostMapping("/register/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AuthResponseDto> registerAdmin(@Valid @RequestBody AdminRegisterRequestDto registerRequest) {
-        return ResponseEntity.ok(authService.registerAdmin(registerRequest));
+        return ResponseEntity.created(URI.create("/api/auth/register/admin"))
+                .body(authService.registerAdmin(registerRequest));
     }
-
 }
