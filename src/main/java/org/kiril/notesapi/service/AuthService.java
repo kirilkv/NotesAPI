@@ -1,6 +1,7 @@
 package org.kiril.notesapi.service;
 
 import lombok.RequiredArgsConstructor;
+import org.kiril.notesapi.dto.AdminRegisterRequestDto;
 import org.kiril.notesapi.dto.AuthRequestDto;
 import org.kiril.notesapi.dto.AuthResponseDto;
 import org.kiril.notesapi.dto.RegisterRequestDto;
@@ -9,6 +10,7 @@ import org.kiril.notesapi.model.User;
 import org.kiril.notesapi.repository.UserRepository;
 import org.kiril.notesapi.security.UserPrincipal;
 import org.kiril.notesapi.security.jwt.JwtTokenProvider;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -16,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +31,7 @@ public class AuthService {
     @Transactional
     public AuthResponseDto register(RegisterRequestDto registerRequest) {
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new RuntimeException("Email is already taken");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already taken");
         }
 
         User user = new User();
@@ -75,4 +78,31 @@ public class AuthService {
         response.setRole(user.getRole());
         return response;
     }
+
+    @Transactional
+    public AuthResponseDto registerAdmin(AdminRegisterRequestDto registerRequest) {
+        if (userRepository.existsByEmail(registerRequest.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already taken");
+        }
+
+        User user = new User();
+        user.setEmail(registerRequest.getEmail());
+        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        user.setRole(Role.ROLE_ADMIN);
+
+        User savedUser = userRepository.save(user);
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        registerRequest.getEmail(),
+                        registerRequest.getPassword()
+                )
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = tokenProvider.generateToken(authentication);
+
+        return createAuthResponse(jwt, savedUser);
+    }
+
 }

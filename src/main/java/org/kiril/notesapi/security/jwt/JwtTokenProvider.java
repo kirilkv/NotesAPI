@@ -32,6 +32,7 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtExpirationMs);
 
+
         // Build the JWT token
         return Jwts.builder()
                 .setSubject(userPrincipal.getUsername())
