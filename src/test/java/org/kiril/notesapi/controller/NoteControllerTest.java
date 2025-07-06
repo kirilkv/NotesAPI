@@ -27,7 +27,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -131,6 +130,7 @@ class NoteControllerTest {
         when(noteService.updateNote(eq(1L), any(NoteDto.class))).thenReturn(noteDto);
 
         mockMvc.perform(put("/api/notes/1")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(noteDto)))
                 .andExpect(status().isOk())
@@ -147,6 +147,7 @@ class NoteControllerTest {
         when(noteService.partialUpdateNote(eq(1L), any())).thenReturn(updatedNote);
 
         mockMvc.perform(patch("/api/notes/1")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updates)))
                 .andExpect(status().isOk())
@@ -158,7 +159,7 @@ class NoteControllerTest {
     void deleteNote_WithValidId_ShouldReturn204() throws Exception {
         doNothing().when(noteService).deleteNote(1L);
 
-        mockMvc.perform(delete("/api/notes/1"))
+        mockMvc.perform(delete("/api/notes/1").with(csrf()))
                 .andExpect(status().isNoContent());
     }
 
@@ -168,7 +169,7 @@ class NoteControllerTest {
         doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND))
                 .when(noteService).deleteNote(99L);
 
-        mockMvc.perform(delete("/api/notes/99"))
+        mockMvc.perform(delete("/api/notes/99").with(csrf()))
                 .andExpect(status().isNotFound());
     }
 

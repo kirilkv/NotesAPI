@@ -87,6 +87,16 @@ class NoteServiceTest {
     @Test
     void getNotes_AsAdmin_ShouldReturnAllNotes() {
         user.setRole(Role.ROLE_ADMIN);
+
+        userPrincipal = new UserPrincipal(
+                user.getId(),
+                user.getEmail(),
+                "password",
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+        );
+
+        when(authentication.getPrincipal()).thenReturn(userPrincipal);
+
         List<Note> allNotes = Arrays.asList(
                 createNote(1L, "Note 1", user),
                 createNote(2L, "Note 2", user)
@@ -99,6 +109,7 @@ class NoteServiceTest {
         assertEquals(2, result.size());
         verify(noteRepository).findAll();
     }
+
 
     @Test
     void getNote_AsOwner_ShouldReturnNote() {
