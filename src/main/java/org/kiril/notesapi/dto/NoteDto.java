@@ -5,8 +5,13 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import java.time.LocalDateTime;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 @Data
-public class NoteDto {
+public class NoteDto implements Serializable{
+    @Serial
+    private static final long serialVersionUID = 1L;
     private Long id;
 
     @NotBlank(message = "Title is required")

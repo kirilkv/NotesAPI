@@ -16,9 +16,26 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     defer-datasource-initialization: true
 
+  cache:
+    redis:
+      time-to-live: 3600000
+    type: redis
+
+  data:
+    redis:
+      repositories:
+        enabled: false
+      host: localhost
+      port: 6379
+
 server:
   port: 8080
 
 jwt:
   secret: cc0c8c3d81f69e4696825a447cab53ae5eaab65a198f6b1443fd0b32a0d9c75c
   expirationMs: 3600000 # 1 hour
+
+logging:
+  level:
+    org.springframework.cache: TRACE
+
