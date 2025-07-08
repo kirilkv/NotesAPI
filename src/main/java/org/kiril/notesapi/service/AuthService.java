@@ -10,6 +10,7 @@ import org.kiril.notesapi.model.User;
 import org.kiril.notesapi.repository.UserRepository;
 import org.kiril.notesapi.security.UserPrincipal;
 import org.kiril.notesapi.security.jwt.JwtTokenProvider;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import static org.kiril.notesapi.config.CacheConfig.USERS_CACHE;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -28,6 +31,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
 
+    @CacheEvict(value = USERS_CACHE, allEntries = true)
     @Transactional
     public AuthResponseDto register(RegisterRequestDto registerRequest) {
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
@@ -79,6 +83,7 @@ public class AuthService {
         return response;
     }
 
+    @CacheEvict(value = USERS_CACHE, allEntries = true)
     @Transactional
     public AuthResponseDto registerAdmin(AdminRegisterRequestDto registerRequest) {
         if (userRepository.existsByEmail(registerRequest.getEmail())) {

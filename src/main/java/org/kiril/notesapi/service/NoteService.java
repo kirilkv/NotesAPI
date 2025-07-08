@@ -31,27 +31,39 @@ public class NoteService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    @Cacheable(value = NOTES_CACHE,
-            key = "{T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName(), " +
-                    "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getAuthorities(), " +
-                    "#userId}",
-            unless = "#result.isEmpty()")
+    @Caching(cacheable = {
+            @Cacheable(value = NOTES_CACHE,
+                    key = "'admin:all'",
+                    condition = "@noteService.isAdmin() && #userId == null"),
+            @Cacheable(value = NOTES_CACHE,
+                    key = "'user:' + #userId",
+                    condition = "#userId != null"),
+            @Cacheable(value = NOTES_CACHE,
+                    key = "'user:' + @noteService.getCurrentUserId()",
+                    condition = "!@noteService.isAdmin() && #userId == null")
+    })
     public List<NoteDto> getNotes(Long userId) {
         UserPrincipal currentUser = getCurrentUser();
         boolean isAdmin = hasAdminRole(currentUser);
 
-        List<Note> notes;
         if (isAdmin) {
             if (userId != null) {
-                notes = noteRepository.findByUserId(userId);
-            } else {
-                notes = noteRepository.findAll();
+                return noteRepository.findByUserId(userId).stream()
+                        .map(this::mapToDto)
+                        .toList();
             }
-        } else {
-            notes = noteRepository.findByUserId(currentUser.getId());
+            return noteRepository.findAll().stream()
+                    .map(this::mapToDto)
+                    .toList();
         }
 
-        return notes.stream().map(this::mapToDto).toList();
+        if (userId != null && !currentUser.getId().equals(userId)) {
+            throw new AccessDeniedException("You do not have permission to access these notes.");
+        }
+
+        return noteRepository.findByUserId(currentUser.getId()).stream()
+                .map(this::mapToDto)
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -63,8 +75,13 @@ public class NoteService {
     }
 
     @Caching(
-            evict = { @CacheEvict(value = NOTES_CACHE, allEntries = true) },
-            put = { @CachePut(value = NOTE_CACHE, key = "#result.id") }
+            evict = {
+                    @CacheEvict(value = NOTES_CACHE, key = "'user:' + @noteService.getCurrentUserId()"),
+                    @CacheEvict(value = NOTES_CACHE, key = "'admin:all'")
+            },
+            put = {
+                    @CachePut(value = NOTE_CACHE, key = "#result.id")
+            }
     )
     @Transactional
     public NoteDto createNote(NoteDto noteDto) {
@@ -81,10 +98,15 @@ public class NoteService {
         return mapToDto(savedNote);
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = NOTE_CACHE, key = "#id"),
-            @CacheEvict(value = NOTES_CACHE, allEntries = true)
-    })
+    @Caching(
+            evict = {
+                    @CacheEvict(value = NOTES_CACHE, key = "'user:' + @noteService.getCurrentUserId()"),
+                    @CacheEvict(value = NOTES_CACHE, key = "'admin:all'")
+            },
+            put = {
+                    @CachePut(value = NOTE_CACHE, key = "#result.id")
+            }
+    )
     @Transactional
     public NoteDto updateNote(Long id, NoteDto noteDto) {
         Note note = findNoteById(id);
@@ -96,6 +118,15 @@ public class NoteService {
         return mapToDto(updatedNote);
     }
 
+    @Caching(
+            evict = {
+                    @CacheEvict(value = NOTES_CACHE, key = "'user:' + @noteService.getCurrentUserId()"),
+                    @CacheEvict(value = NOTES_CACHE, key = "'admin:all'")
+            },
+            put = {
+                    @CachePut(value = NOTE_CACHE, key = "#result.id")
+            }
+    )
     @Transactional
     public NoteDto partialUpdateNote(Long id, Map<String, Object> updates) {
         Note note = findNoteById(id);
@@ -112,16 +143,29 @@ public class NoteService {
         return mapToDto(updatedNote);
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = NOTE_CACHE, key = "#id"),
-            @CacheEvict(value = NOTES_CACHE, allEntries = true)
-    })
+    @Caching(
+            evict = {
+                    @CacheEvict(value = NOTE_CACHE, key = "#id"),
+                    @CacheEvict(value = NOTES_CACHE, key = "'user:' + @noteService.getCurrentUserId()"),
+                    @CacheEvict(value = NOTES_CACHE, key = "'admin:all'")
+            }
+    )
     @Transactional
     public void deleteNote(Long id) {
         Note note = findNoteById(id);
         checkNoteAccess(note);
         noteRepository.delete(note);
     }
+
+    public boolean isAdmin() {
+        UserPrincipal currentUser = getCurrentUser();
+        return hasAdminRole(currentUser);
+    }
+
+    public Long getCurrentUserId() {
+        return getCurrentUser().getId();
+    }
+
 
     private Note findNoteById(Long id) {
         return noteRepository.findById(id)
