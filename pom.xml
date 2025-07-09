@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>org.kiril</groupId>
-    <artifactId>NotesAPI</artifactId>
+    <artifactId>notesapi</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>NotesAPI</name>
     <description>NotesAPI</description>
