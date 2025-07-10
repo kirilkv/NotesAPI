@@ -34,35 +34,28 @@ public class AuthService {
     @CacheEvict(value = USERS_CACHE, allEntries = true)
     @Transactional
     public AuthResponseDto register(RegisterRequestDto registerRequest) {
-        try {
-            if (userRepository.existsByEmail(registerRequest.getEmail())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already taken");
-            }
-
-            User user = new User();
-            user.setEmail(registerRequest.getEmail());
-            user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-            user.setRole(Role.ROLE_USER);
-
-            User savedUser = userRepository.save(user);
-
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            registerRequest.getEmail(),
-                            registerRequest.getPassword()
-                    )
-            );
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            String jwt = tokenProvider.generateToken(authentication);
-
-            return createAuthResponse(jwt, savedUser);
-        } catch (ResponseStatusException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to process registration at this time");
+        if (userRepository.existsByEmail(registerRequest.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already taken");
         }
 
+        User user = new User();
+        user.setEmail(registerRequest.getEmail());
+        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        user.setRole(Role.ROLE_USER);
+
+        User savedUser = userRepository.save(user);
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        registerRequest.getEmail(),
+                        registerRequest.getPassword()
+                )
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = tokenProvider.generateToken(authentication);
+
+        return createAuthResponse(jwt, savedUser);
     }
 
     public AuthResponseDto login(AuthRequestDto loginRequest) {

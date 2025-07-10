@@ -34,5 +34,6 @@ https://web.postman.co/workspace/My-Workspace~e73e4812-3f0b-42f3-806c-904e9cc672
 - `./mvnw spring-boot:build-image -Dspring-boot.build-image.imagePlatform=linux/amd64 -Dspring-boot.build-image.imageName=notesapi:latest`
 - `docker tag notesapi:latest ghcr.io/kirilkv/notesapi:0.0.1-snapshot`
 - `docker push ghcr.io/kirilkv/notesapi:0.0.1-snapshot`
+- `fly deploy`
 
 
