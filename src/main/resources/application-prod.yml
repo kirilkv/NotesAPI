@@ -23,7 +23,7 @@ spring:
     redis:
       repositories:
         enabled: false
-      url: {REDIS_URL}
+      url: ${REDIS_URL}
 
 server:
   port: ${PORT}
