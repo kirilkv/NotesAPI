@@ -1,9 +1,18 @@
 spring:
   datasource:
     url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+
+  sql:
+    init:
+      mode: always
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    defer-datasource-initialization: true
 
   cache:
     redis:
@@ -14,12 +23,16 @@ spring:
     redis:
       repositories:
         enabled: false
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
+      url: {REDIS_URL}
+
+server:
+  port: ${PORT}
 
 jwt:
   secret: ${JWT_SECRET}
   expirationMs: ${JWT_EXPIRATION_MS}
 
-server:
-  port: ${PORT}
+logging:
+  level:
+    org.springframework.cache: TRACE
+
