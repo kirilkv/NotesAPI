@@ -13,11 +13,11 @@ import org.kiril.notesapi.security.UserPrincipal;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -130,7 +130,7 @@ class NoteServiceTest {
 
         when(noteRepository.findById(1L)).thenReturn(Optional.of(note));
 
-        assertThrows(AccessDeniedException.class, () ->
+        assertThrows(ResponseStatusException.class, () ->
                 noteService.getNote(1L)
         );
     }
@@ -162,6 +162,7 @@ class NoteServiceTest {
         updateDto.setTitle("Updated Title");
         updateDto.setContent("Updated Content");
 
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user)); // Mock to return the user
         when(noteRepository.findById(1L)).thenReturn(Optional.of(existingNote));
         when(noteRepository.save(any(Note.class))).thenReturn(existingNote);
 

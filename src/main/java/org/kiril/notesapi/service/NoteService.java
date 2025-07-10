@@ -58,7 +58,7 @@ public class NoteService {
         }
 
         if (userId != null && !currentUser.getId().equals(userId)) {
-            throw new AccessDeniedException("You do not have permission to access these notes.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to access these notes.");
         }
 
         return noteRepository.findByUserId(currentUser.getId()).stream()
@@ -89,6 +89,8 @@ public class NoteService {
         User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
+        checkUserNoteExistsByTitle(noteDto.getTitle(), user.getId());
+
         Note note = new Note();
         note.setTitle(noteDto.getTitle());
         note.setContent(noteDto.getContent());
@@ -109,6 +111,12 @@ public class NoteService {
     )
     @Transactional
     public NoteDto updateNote(Long id, NoteDto noteDto) {
+        UserPrincipal currentUser = getCurrentUser();
+        User user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        checkUserNoteExistsByTitle(noteDto.getTitle(), user.getId());
+
         Note note = findNoteById(id);
         checkNoteAccess(note);
 
@@ -179,7 +187,15 @@ public class NoteService {
         boolean isOwner = note.getUser().getId().equals(currentUser.getId());
 
         if (!isAdmin && !isOwner) {
-            throw new AccessDeniedException("You don't have permission to access this note");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to access this note.");
+        }
+    }
+
+    private void checkUserNoteExistsByTitle(String title, Long userId) {
+        if (noteRepository.existsByTitleAndUserId(title, userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "You already have a note with this title."
+            );
         }
     }
 
@@ -206,4 +222,6 @@ public class NoteService {
         dto.setUserId(note.getUser().getId());
         return dto;
     }
+
+
 }

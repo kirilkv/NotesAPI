@@ -15,8 +15,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -104,9 +102,9 @@ class AuthServiceTest {
         request.setPassword("wrongpassword");
 
         when(authenticationManager.authenticate(any()))
-                .thenThrow(new BadCredentialsException("Invalid credentials"));
+                .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email and/or password are incorrect."));
 
-        assertThrows(BadCredentialsException.class, () ->
+        assertThrows(ResponseStatusException.class, () ->
                 authService.login(request)
         );
     }

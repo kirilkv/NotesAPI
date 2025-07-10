@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface NoteRepository extends JpaRepository<Note, Long> {
     List<Note> findByUserId(Long userId);
+    boolean existsByTitleAndUserId(String title, Long userId);
 }
