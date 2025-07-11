@@ -89,6 +89,10 @@ public class NoteService {
         User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
+        if (isAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admins are not allowed to create notes");
+        }
+
         checkUserNoteExistsByTitle(noteDto.getTitle(), user.getId());
 
         Note note = new Note();
@@ -114,6 +118,10 @@ public class NoteService {
         UserPrincipal currentUser = getCurrentUser();
         User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (isAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admins are not allowed to update notes");
+        }
 
         checkUserNoteExistsByTitle(noteDto.getTitle(), user.getId());
 
@@ -160,6 +168,9 @@ public class NoteService {
     )
     @Transactional
     public void deleteNote(Long id) {
+        if (isAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admins are not allowed to delete notes");
+        }
         Note note = findNoteById(id);
         checkNoteAccess(note);
         noteRepository.delete(note);
