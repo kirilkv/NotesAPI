@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.kiril.notesapi.config.CacheConfig.*;
 
@@ -123,9 +124,11 @@ public class NoteService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admins are not allowed to update notes");
         }
 
-        checkUserNoteExistsByTitle(noteDto.getTitle(), user.getId());
-
         Note note = findNoteById(id);
+        if (!Objects.equals(note.getTitle(), noteDto.getTitle())) {
+            checkUserNoteExistsByTitle(noteDto.getTitle(), user.getId());
+        }
+
         checkNoteAccess(note);
 
         note.setTitle(noteDto.getTitle());
