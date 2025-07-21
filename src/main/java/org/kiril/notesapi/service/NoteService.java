@@ -133,7 +133,7 @@ public class NoteService {
 
         note.setTitle(noteDto.getTitle());
         note.setContent(noteDto.getContent());
-        Note updatedNote = noteRepository.save(note);
+        Note updatedNote = noteRepository.saveAndFlush(note);
         return mapToDto(updatedNote);
     }
 
