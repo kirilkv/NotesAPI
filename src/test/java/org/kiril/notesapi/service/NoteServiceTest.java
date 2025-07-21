@@ -162,7 +162,7 @@ class NoteServiceTest {
         updateDto.setTitle("Updated Title");
         updateDto.setContent("Updated Content");
 
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user)); // Mock to return the user
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(noteRepository.findById(1L)).thenReturn(Optional.of(existingNote));
         when(noteRepository.save(any(Note.class))).thenReturn(existingNote);
 
@@ -180,6 +180,83 @@ class NoteServiceTest {
 
         verify(noteRepository).delete(note);
     }
+
+    @Test
+    void createNote_AsAdmin_ShouldThrowException() {
+        user.setRole(Role.ROLE_ADMIN);
+
+        userPrincipal = new UserPrincipal(
+                user.getId(),
+                user.getEmail(),
+                "password",
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+        );
+
+        when(authentication.getPrincipal()).thenReturn(userPrincipal);
+
+        NoteDto noteDto = new NoteDto();
+        noteDto.setTitle("New Note");
+        noteDto.setContent("Content");
+
+        assertThrows(ResponseStatusException.class, () ->
+                noteService.createNote(noteDto)
+        );
+    }
+
+    @Test
+    void updateNote_AsAdmin_ShouldThrowException() {
+        user.setRole(Role.ROLE_ADMIN);
+
+        userPrincipal = new UserPrincipal(
+                user.getId(),
+                user.getEmail(),
+                "password",
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+        );
+
+        when(authentication.getPrincipal()).thenReturn(userPrincipal);
+
+        NoteDto noteDto = new NoteDto();
+        noteDto.setTitle("Updated Note");
+        noteDto.setContent("Updated Content");
+
+        assertThrows(ResponseStatusException.class, () ->
+                noteService.updateNote(1L, noteDto)
+        );
+    }
+
+    @Test
+    void deleteNote_AsAdmin_ShouldThrowException() {
+        user.setRole(Role.ROLE_ADMIN);
+
+        userPrincipal = new UserPrincipal(
+                user.getId(),
+                user.getEmail(),
+                "password",
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+        );
+
+        when(authentication.getPrincipal()).thenReturn(userPrincipal);
+
+        assertThrows(ResponseStatusException.class, () ->
+                noteService.deleteNote(1L)
+        );
+    }
+
+    @Test
+    void createNote_WithDuplicateTitle_ShouldThrowException() {
+        NoteDto noteDto = new NoteDto();
+        noteDto.setTitle("Duplicate Title");
+        noteDto.setContent("Some Content");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(noteRepository.existsByTitleAndUserId("Duplicate Title", user.getId())).thenReturn(true);
+
+        assertThrows(ResponseStatusException.class, () ->
+                noteService.createNote(noteDto)
+        );
+    }
+
 
     private Note createNote(Long id, String title, User user) {
         Note note = new Note();
